@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSA Search Engine</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f2f2f2; display: flex; flex-direction: column; align-items: center; padding-top: 100px; }
+        .title { font-size: 3em; color: #4285F4; margin-bottom: 20px; font-weight: bold; }
+        .search-container { position: relative; width: 500px; }
+        input[type="text"] { width: 100%; padding: 15px; font-size: 16px; border: 1px solid #dfe1e5; border-radius: 24px; outline: none; }
+        input[type="text"]:focus { box-shadow: 0 1px 6px rgba(32,33,36,.28); }
+        .suggestions { position: absolute; top: 50px; width: 100%; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none; }
+        .suggestion-item { padding: 10px 15px; cursor: pointer; }
+        .suggestion-item:hover { background-color: #f1f3f4; }
+        .results { margin-top: 30px; width: 600px; }
+        .result-item { background: white; padding: 20px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .result-title { color: #1a0dab; font-size: 1.2em; font-weight: bold; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="title">DSA Search Engine</div>
+    
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search for algorithms, tries, heaps..." onkeyup="handleTyping()">
+        <div id="suggestionsBox" class="suggestions"></div>
+    </div>
+
+    <div id="resultsBox" class="results"></div>
+
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const suggestionsBox = document.getElementById('suggestionsBox');
+        const resultsBox = document.getElementById('resultsBox');
+
+        async function handleTyping() {
+            let query = searchInput.value;
+            if (query.length === 0) {
+                suggestionsBox.style.display = 'none';
+                resultsBox.innerHTML = '';
+                return;
+            }
+
+            // Fetch Autocomplete Suggestions
+            let res = await fetch('/autocomplete?q=' + query);
+            let suggestions = await res.json();
+            
+            if (suggestions.length > 0) {
+                suggestionsBox.innerHTML = suggestions.map(s => 
+                    `<div class="suggestion-item" onclick="selectSuggestion('${s}')">${s}</div>`
+                ).join('');
+                suggestionsBox.style.display = 'block';
+            } else {
+                suggestionsBox.style.display = 'none';
+            }
+
+            // Fetch Search Results
+            let searchRes = await fetch('/search?q=' + query);
+            let results = await searchRes.json();
+            
+            resultsBox.innerHTML = results.map(r => 
+                `<div class="result-item">
+                    <div class="result-title">${r.title}</div>
+                    <div>${r.content}</div>
+                </div>`
+            ).join('');
+        }
+
+        function selectSuggestion(word) {
+            searchInput.value = word;
+            suggestionsBox.style.display = 'none';
+            handleTyping();
+        }
+    </script>
+</body>
+</html>
